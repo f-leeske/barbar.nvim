@@ -42,6 +42,8 @@ never_indent_before_if_condition = false
 never_indent_comment_on_if_branch = false
 # NOTE: may need to be changed      ↑
 quote_style = single
+# for stylua
+quote_type = single
 remove_call_expression_list_finish_comma = false
 space_after_comma = true
 space_after_comma_in_for_statement = true
