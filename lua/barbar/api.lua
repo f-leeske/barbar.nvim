@@ -40,7 +40,8 @@ local function pick_buffer_wrap(fn)
   state.is_picking_buffer = true
   render.update()
 
-  while fn() do end
+  while fn() do
+  end
 
   state.is_picking_buffer = false
   render.update()
@@ -51,7 +52,10 @@ end
 --- @return nil
 local function notify_buffer_not_found(buffer_number)
   notify(
-    'Current buffer (' .. buffer_number .. ") not found in barbar.nvim's list of buffers: " .. vim.inspect(state.buffers),
+    'Current buffer ('
+      .. buffer_number
+      .. ") not found in barbar.nvim's list of buffers: "
+      .. vim.inspect(state.buffers),
     vim.log.levels.ERROR
   )
 end
@@ -200,13 +204,9 @@ end
 --- @param index integer
 --- @return nil
 function api.goto_buffer_pinned(index)
-  local buffers =
-    vim.tbl_filter(
-      function(number)
-        return state.get_buffer_data(number).pinned == true
-      end,
-      state.buffers
-    )
+  local buffers = vim.tbl_filter(function(number)
+    return state.get_buffer_data(number).pinned == true
+  end, state.buffers)
 
   goto_buffer_impl(index, buffers)
 end
@@ -215,13 +215,9 @@ end
 --- @param index integer
 --- @return nil
 function api.goto_buffer_unpinned(index)
-  local buffers =
-    vim.tbl_filter(
-      function(number)
-        return state.get_buffer_data(number).pinned == false
-      end,
-      state.buffers
-    )
+  local buffers = vim.tbl_filter(function(number)
+    return state.get_buffer_data(number).pinned == false
+  end, state.buffers)
 
   goto_buffer_impl(index, buffers)
 end
@@ -241,10 +237,14 @@ function api.goto_buffer_relative(steps)
   local idx = index_of(state.buffers, current_bufnr)
 
   if not idx then -- fall back to: 1. the alternate buffer, 2. the first buffer
-    idx = index_of(state.buffers, bufnr'#') or 1
+    idx = index_of(state.buffers, bufnr('#')) or 1
     notify(
-      "Couldn't find buffer #" .. current_bufnr .. ' in the list: ' .. vim.inspect(state.buffers) ..
-        '. Falling back to buffer #' .. state.buffers[idx],
+      "Couldn't find buffer #"
+        .. current_bufnr
+        .. ' in the list: '
+        .. vim.inspect(state.buffers)
+        .. '. Falling back to buffer #'
+        .. state.buffers[idx],
       vim.log.levels.INFO
     )
   end
@@ -255,7 +255,7 @@ end
 local move_animation = nil --- @type nil|barbar.animate.state
 local move_animation_data = {
   next_positions = nil, --- @type nil|integer[]
-  previous_positions = nil --- @type nil|integer[]
+  previous_positions = nil, --- @type nil|integer[]
 }
 
 --- An incremental animation for `move_buffer_animated`.
@@ -312,7 +312,7 @@ local function swap_buffer(from_idx, to_idx)
   if animation == true then
     local current_index = index_of(state.buffers_visible, buffer_number)
     local start_index = min(from_idx, current_index)
-    local end_index   = max(from_idx, current_index)
+    local end_index = max(from_idx, current_index)
 
     if start_index == end_index then
       return
@@ -322,11 +322,11 @@ local function swap_buffer(from_idx, to_idx)
 
     local next_positions = layout.calculate_buffers_position_by_buffer_number(state)
 
-    for _, layout_bufnr  in ipairs(state.buffers_visible) do
+    for _, layout_bufnr in ipairs(state.buffers_visible) do
       local current_data = state.get_buffer_data(layout_bufnr)
 
       local previous_position = previous_positions[layout_bufnr]
-      local next_position     = next_positions[layout_bufnr]
+      local next_position = next_positions[layout_bufnr]
 
       if next_position ~= previous_position then
         current_data.position = previous_positions[layout_bufnr]
@@ -339,13 +339,15 @@ local function swap_buffer(from_idx, to_idx)
       next_positions = next_positions,
     }
 
-    move_animation =
-      animate.start(MOVE_DURATION, 0, 1, vim.v.t_float,
-        function(ratio, current_animation) move_buffer_animated_tick(ratio, current_animation) end)
+    move_animation = animate.start(MOVE_DURATION, 0, 1, vim.v.t_float, function(ratio, current_animation)
+      move_buffer_animated_tick(ratio, current_animation)
+    end)
   end
 
   render.update()
 end
+
+api.swap_buffer = swap_buffer
 
 --- Move the current buffer to the index specified.
 --- @param idx integer
@@ -393,20 +395,25 @@ end
 --- Order the buffers by their buffer number.
 --- @return nil
 function api.order_by_buffer_number()
-  table_sort(state.buffers, function(a, b) return a < b end)
+  table_sort(state.buffers, function(a, b)
+    return a < b
+  end)
   render.update()
 end
 
 --- Order the buffers by their name
 --- @return nil
 function api.order_by_name()
-  table_sort(state.buffers, with_pin_order(function(a, b, to_sort_case)
-    local parts_of_a = fs.split(buf_get_name(a))
-    local parts_of_b = fs.split(buf_get_name(b))
-    local name_of_a = parts_of_a[#parts_of_a]
-    local name_of_b = parts_of_b[#parts_of_b]
-    return to_sort_case(name_of_b) > to_sort_case(name_of_a)
-  end))
+  table_sort(
+    state.buffers,
+    with_pin_order(function(a, b, to_sort_case)
+      local parts_of_a = fs.split(buf_get_name(a))
+      local parts_of_b = fs.split(buf_get_name(b))
+      local name_of_a = parts_of_a[#parts_of_a]
+      local name_of_b = parts_of_b[#parts_of_b]
+      return to_sort_case(name_of_b) > to_sort_case(name_of_a)
+    end)
+  )
 
   render.update()
 end
@@ -414,23 +421,26 @@ end
 --- Order the buffers by their parent directory.
 --- @return nil
 function api.order_by_directory()
-  table_sort(state.buffers, with_pin_order(function(a, b, to_sort_case)
-    local name_of_a = buf_get_name(a)
-    local name_of_b = buf_get_name(b)
+  table_sort(
+    state.buffers,
+    with_pin_order(function(a, b, to_sort_case)
+      local name_of_a = buf_get_name(a)
+      local name_of_b = buf_get_name(b)
 
-    name_of_a = fs.normalize(name_of_a)
-    name_of_b = fs.normalize(name_of_b)
+      name_of_a = fs.normalize(name_of_a)
+      name_of_b = fs.normalize(name_of_b)
 
-    local level_of_a = #fs.split(name_of_a)
-    local level_of_b = #fs.split(name_of_b)
+      local level_of_a = #fs.split(name_of_a)
+      local level_of_b = #fs.split(name_of_b)
 
-    if level_of_a ~= level_of_b then
-      return level_of_a < level_of_b
-    end
+      if level_of_a ~= level_of_b then
+        return level_of_a < level_of_b
+      end
 
-    local compare_a_b = to_sort_case(name_of_b) > to_sort_case(name_of_a)
-    return compare_a_b
-  end))
+      local compare_a_b = to_sort_case(name_of_b) > to_sort_case(name_of_a)
+      return compare_a_b
+    end)
+  )
 
   render.update()
 end
@@ -438,9 +448,12 @@ end
 --- Order the buffers by filetype.
 --- @return nil
 function api.order_by_language()
-  table_sort(state.buffers, with_pin_order(function(a, b, to_sort_case)
-    return to_sort_case(buf_get_option(a, 'filetype')) < to_sort_case(buf_get_option(b, 'filetype'))
-  end))
+  table_sort(
+    state.buffers,
+    with_pin_order(function(a, b, to_sort_case)
+      return to_sort_case(buf_get_option(a, 'filetype')) < to_sort_case(buf_get_option(b, 'filetype'))
+    end)
+  )
 
   render.update()
 end
@@ -448,9 +461,12 @@ end
 --- Order the buffers by their respective window number.
 --- @return nil
 function api.order_by_window_number()
-  table_sort(state.buffers, with_pin_order(function(a, b)
-    return bufwinnr(buf_get_name(a)) < bufwinnr(buf_get_name(b))
-  end))
+  table_sort(
+    state.buffers,
+    with_pin_order(function(a, b)
+      return bufwinnr(buf_get_name(a)) < bufwinnr(buf_get_name(b))
+    end)
+  )
 
   render.update()
 end
@@ -459,7 +475,9 @@ end
 --- @return nil
 function api.pick_buffer()
   pick_buffer_wrap(function()
-    local ok, letter = pcall(function() return char(getchar()) end)
+    local ok, letter = pcall(function()
+      return char(getchar())
+    end)
     if ok and letter ~= '' then
       if jump_mode.buffer_by_letter[letter] ~= nil then
         set_current_buf(jump_mode.buffer_by_letter[letter])
@@ -479,7 +497,9 @@ end
 function api.pick_buffer_delete(count, force)
   local deleted = 0
   pick_buffer_wrap(function()
-    local ok, letter = pcall(function() return char(getchar()) end)
+    local ok, letter = pcall(function()
+      return char(getchar())
+    end)
     if ok and letter ~= '' then
       if jump_mode.buffer_by_letter[letter] ~= nil then
         bdelete(force, jump_mode.buffer_by_letter[letter])
