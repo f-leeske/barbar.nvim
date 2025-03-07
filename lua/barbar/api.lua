@@ -5,13 +5,13 @@ local table_insert = table.insert
 local table_remove = table.remove
 local table_sort = table.sort
 
-local buf_get_name = vim.api.nvim_buf_get_name --- @type function
-local buf_get_option = vim.api.nvim_buf_get_option --- @type function
-local bufnr = vim.fn.bufnr --- @type function
-local bufwinnr = vim.fn.bufwinnr --- @type function
-local command = vim.api.nvim_command --- @type function
+local buf_get_name = vim.api.nvim_buf_get_name       --- @type function
+local buf_get_option = vim.api.nvim_buf_get_option   --- @type function
+local bufnr = vim.fn.bufnr                           --- @type function
+local bufwinnr = vim.fn.bufwinnr                     --- @type function
+local command = vim.api.nvim_command                 --- @type function
 local get_current_buf = vim.api.nvim_get_current_buf --- @type function
-local getchar = vim.fn.getchar --- @type function
+local getchar = vim.fn.getchar                       --- @type function
 local set_current_buf = vim.api.nvim_set_current_buf --- @type function
 local tolower = vim.fn.tolower
 
@@ -53,9 +53,9 @@ end
 local function notify_buffer_not_found(buffer_number)
   notify(
     'Current buffer ('
-      .. buffer_number
-      .. ") not found in barbar.nvim's list of buffers: "
-      .. vim.inspect(state.buffers),
+    .. buffer_number
+    .. ") not found in barbar.nvim's list of buffers: "
+    .. vim.inspect(state.buffers),
     vim.log.levels.ERROR
   )
 end
@@ -240,11 +240,11 @@ function api.goto_buffer_relative(steps)
     idx = index_of(state.buffers, bufnr('#')) or 1
     notify(
       "Couldn't find buffer #"
-        .. current_bufnr
-        .. ' in the list: '
-        .. vim.inspect(state.buffers)
-        .. '. Falling back to buffer #'
-        .. state.buffers[idx],
+      .. current_bufnr
+      .. ' in the list: '
+      .. vim.inspect(state.buffers)
+      .. '. Falling back to buffer #'
+      .. state.buffers[idx],
       vim.log.levels.INFO
     )
   end
@@ -252,9 +252,9 @@ function api.goto_buffer_relative(steps)
   set_current_buf(state.buffers[(idx + steps - 1) % #state.buffers + 1])
 end
 
-local move_animation = nil --- @type nil|barbar.animate.state
+local move_animation = nil  --- @type nil|barbar.animate.state
 local move_animation_data = {
-  next_positions = nil, --- @type nil|integer[]
+  next_positions = nil,     --- @type nil|integer[]
   previous_positions = nil, --- @type nil|integer[]
 }
 
@@ -299,14 +299,15 @@ local function swap_buffer(from_idx, to_idx)
 
   local animation = config.options.animation
   local buffer_number = state.buffers[from_idx]
+  local target_buffer_number = state.buffers[to_idx]
 
   local previous_positions
   if animation == true then
     previous_positions = layout.calculate_buffers_position_by_buffer_number(state)
   end
 
-  table_remove(state.buffers, from_idx)
-  table_insert(state.buffers, to_idx, buffer_number)
+  state.buffers[from_idx] = target_buffer_number
+  state.buffers[to_idx] = buffer_number
   state.sort_pins_to_left()
 
   if animation == true then
@@ -334,10 +335,7 @@ local function swap_buffer(from_idx, to_idx)
       end
     end
 
-    move_animation_data = {
-      previous_positions = previous_positions,
-      next_positions = next_positions,
-    }
+    move_animation_data = { previous_positions = previous_positions, next_positions = next_positions }
 
     move_animation = animate.start(MOVE_DURATION, 0, 1, vim.v.t_float, function(ratio, current_animation)
       move_buffer_animated_tick(ratio, current_animation)
